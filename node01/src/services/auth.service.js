@@ -1,52 +1,99 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const pool = require("../config/db");
 
-// TEMP: Dummy user (replace with DB later)
-const dummyUser = {
-  id: 1,
-  username: "admin",
-  password: bcrypt.hashSync("admin@123", 10),
-  role: "ADMIN"
-};
+/* ===============================
+   Custom Auth Error
+   =============================== */
+class AuthError extends Error {
+  constructor(message = "Invalid username or password") {
+    super(message);
+    this.name = "AuthError";
+  }
+}
 
+/* ===============================
+   Login Service
+   =============================== */
 exports.login = async (username, password) => {
-  // 1. Check user
-  if (username !== dummyUser.username) {
-    throw new Error("Invalid username or password");
-  }
+  // Normalize inputs (defense-in-depth)
+  username = username.trim();
 
-  // 2. Verify password
-  const isPasswordValid = await bcrypt.compare(
-    password,
-    dummyUser.password
-  );
+  /* ===============================
+     1. Fetch user from DB
+     =============================== */
+  const query = `
+    SELECT id, username, password, role, is_active
+    FROM users
+    WHERE username = $1
+    LIMIT 1
+  `;
 
-  if (!isPasswordValid) {
-    throw new Error("Invalid username or password");
-  }
-
-  // 3. Create token
-  const token = jwt.sign(
-    {
-      userId: dummyUser.id,
-      username: dummyUser.username,
-      role: dummyUser.role
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN
+  let user;
+  try {
+    const { rows } = await pool.query(query, [username]);
+    if (rows.length === 0) {
+      throw new AuthError();
     }
+    user = rows[0];
+  } catch (err) {
+    // Prevent DB error leaks
+    if (err instanceof AuthError) throw err;
+    throw new Error("Authentication failed");
+  }
+
+  /* ===============================
+     2. Account status check
+     =============================== */
+  if (user.is_active === false) {
+    throw new AuthError("Account is disabled");
+  }
+
+  /* ===============================
+     3. Password verification
+     =============================== */
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new AuthError();
+  }
+
+  /* ===============================
+     4. Role authorization
+     =============================== */
+  if (user.role !== "ADMIN") {
+    throw new AuthError("Access denied");
+  }
+
+  /* ===============================
+     5. JWT creation
+     =============================== */
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT secret not configured");
+  }
+
+  const payload = {
+    userId: user.id,
+    username: user.username,
+    role: user.role
+  };
+
+  const token = jwt.sign(
+    payload,
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
   );
 
-  // 4. Return response
+  /* ===============================
+     6. Return response
+     =============================== */
   return {
     accessToken: token,
     tokenType: "Bearer",
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn: process.env.JWT_EXPIRES_IN || "1h",
     user: {
-      id: dummyUser.id,
-      username: dummyUser.username,
-      role: dummyUser.role
+      id: user.id,
+      username: user.username,
+      role: user.role
     }
   };
 };

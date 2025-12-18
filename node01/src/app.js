@@ -10,22 +10,6 @@ const app = express();
 app.use(express.json());
 
 // Routes
-// app.get("/api/test", (req, res) => {
-//   const dummyData = {
-//     id: 1,
-//     name: "Test User",
-//     role: "ADMIN"
-//   };
-
-//   return sendApiResponse(
-//     res,
-//     HTTP_STATUS.OK,
-//     "Test API fetched successfully",
-//     dummyData
-//   );
-// });
-
-// Routes
 app.use("/api/auth", authRoutes);
 
 // 404 Handler
