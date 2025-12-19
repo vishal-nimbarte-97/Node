@@ -23,7 +23,7 @@ exports.login = async (username, password) => {
      1. Fetch user from DB
      =============================== */
   const query = `
-    SELECT id, username, password, role, is_active
+    SELECT id, username, password, role
     FROM users
     WHERE username = $1
     LIMIT 1
