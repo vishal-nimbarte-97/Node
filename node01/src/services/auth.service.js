@@ -6,9 +6,10 @@ const pool = require("../config/db");
    Custom Auth Error
    =============================== */
 class AuthError extends Error {
-  constructor(message = "Invalid username or password") {
+  constructor(message = "Invalid username or password", code = "AUTH_ERROR") {
     super(message);
     this.name = "AuthError";
+    this.code = code; // added code for JSON response
   }
 }
 
@@ -33,7 +34,7 @@ exports.login = async (username, password) => {
   try {
     const { rows } = await pool.query(query, [username]);
     if (rows.length === 0) {
-      throw new AuthError();
+      throw new AuthError("Invalid username", "INVALID_USERNAME");
     }
     user = rows[0];
   } catch (err) {
@@ -43,25 +44,18 @@ exports.login = async (username, password) => {
   }
 
   /* ===============================
-     2. Account status check
-     =============================== */
-  if (user.is_active === false) {
-    throw new AuthError("Account is disabled");
-  }
-
-  /* ===============================
      3. Password verification
      =============================== */
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new AuthError();
+    throw new AuthError("Invalid password", "INVALID_PASSWORD");
   }
 
   /* ===============================
      4. Role authorization
      =============================== */
   if (user.role !== "ADMIN") {
-    throw new AuthError("Access denied");
+    throw new AuthError("Access denied", "ACCESS_DENIED");
   }
 
   /* ===============================

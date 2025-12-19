@@ -12,7 +12,7 @@ const app = express();
 ================================ */
 const corsOptions = {
   origin: [
-    "http://localhost:4200", // Angular dev
+    "http://localhost:4200",
     "http://127.0.0.1:4200"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
