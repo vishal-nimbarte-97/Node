@@ -1,9 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 
-const authRoutes = require("./routes/auth.routes");
-const userRoutes = require("./routes/user.routes");
-
+const routes = require("./routes/routes"); // <- use new routes manager
 const sendApiResponse = require("./utils/apiResponse");
 const HTTP_STATUS = require("./utils/httpStatus");
 
@@ -12,6 +10,7 @@ const app = express();
 /* ===============================
    CORS CONFIGURATION
 ================================ */
+
 const corsOptions = {
   origin: [
     "http://localhost:4200",
@@ -22,17 +21,21 @@ const corsOptions = {
   credentials: true
 };
 
+
+
 /* ===============================
    MIDDLEWARE
 ================================ */
 app.use(cors(corsOptions));
 app.use(express.json());
 
+
+
 /* ===============================
    ROUTES
 ================================ */
-app.use("/api/auth", authRoutes);
-app.use("/api",userRoutes)
+app.use("/v1", routes);
+
 
 /* ===============================
    404 HANDLER
