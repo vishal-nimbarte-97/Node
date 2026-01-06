@@ -36,7 +36,7 @@ exports.login = async (username, password) => {
     if (rows.length === 0) {
       throw new AuthError("Invalid username", "INVALID_USERNAME");
     }
-    user = rows[0];
+    user = rows[0];   
   } catch (err) {
     // Prevent DB error leaks
     if (err instanceof AuthError) throw err;

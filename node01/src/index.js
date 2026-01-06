@@ -4,6 +4,8 @@ require("dotenv").config({
   quiet: true
 });
 
+// require("dotenv").config();
+
 // DB Connection (just importing initializes it)
 require("./config/db");
 
