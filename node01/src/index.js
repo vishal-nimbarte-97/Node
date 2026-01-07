@@ -8,6 +8,8 @@ require("dotenv").config({
 
 // DB Connection (just importing initializes it)
 require("./config/db");
+// Redis Connection (just importing initializes it)
+require("./config/redis");
 
 const app = require("./app");
 
